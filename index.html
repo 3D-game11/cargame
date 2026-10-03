@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0f1a" />
+    <title>Traffic Rush 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,800;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+
+    <!-- In-game HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="hud-box">
+          <span class="label">ОНОО</span>
+          <span id="hud-score" class="value">0</span>
+        </div>
+        <div class="hud-box">
+          <span class="label">ЗАЙ</span>
+          <span id="hud-dist" class="value">0.00 км</span>
+        </div>
+        <div class="hud-spacer"></div>
+        <div class="hud-box align-right">
+          <span class="label">ШИЛДЭГ</span>
+          <span id="hud-best" class="value">0</span>
+        </div>
+        <button id="btn-cam" class="icon-btn" title="Камер солих (C)" aria-label="Камер солих">◉</button>
+        <button id="btn-mute" class="icon-btn" title="Дуу (M)" aria-label="Дуу">♪</button>
+        <button id="btn-pause" class="icon-btn" title="Түр зогсоох (P)" aria-label="Түр зогсоох">❚❚</button>
+      </div>
+      <div id="hud-tags"></div>
+      <div id="popups"></div>
+      <div class="speedo">
+        <div class="speed-row">
+          <span id="hud-speed" class="speed-value">0</span>
+          <span class="speed-unit">км/ц</span>
+        </div>
+        <div class="bar speed-bar"><div id="hud-speed-bar"></div></div>
+        <div class="nitro-row">
+          <span>N₂O</span>
+          <div class="bar nitro-bar"><div id="hud-nitro-bar"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Touch controls (shown on touch devices while driving) -->
+    <div id="touch" class="hidden">
+      <div class="touch-cluster">
+        <button data-touch="left" aria-label="Зүүн">◀</button>
+        <button data-touch="right" aria-label="Баруун">▶</button>
+      </div>
+      <div class="touch-cluster">
+        <button data-touch="nitro" class="t-nitro">N₂O</button>
+        <button data-touch="brake" class="t-brake">ТОРМОЗ</button>
+        <button data-touch="gas" class="t-gas">ХУРД</button>
+      </div>
+    </div>
+
+    <div id="countdown" class="hidden"></div>
+    <div id="flash"></div>
+
+    <!-- Main menu -->
+    <div id="menu" class="overlay">
+      <div class="panel">
+        <h1 class="title">TRAFFIC<span>RUSH 3D</span></h1>
+        <p class="subtitle">Замын хөдөлгөөний дундуур давхиж, машинуудын хажуугаар ойрхон өнгөрч оноо цуглуул!</p>
+
+        <div class="option-group">
+          <div class="option-label">Горим</div>
+          <div class="seg" data-setting="mode">
+            <button data-value="oneway">Нэг чиглэлт</button>
+            <button data-value="twoway">Хоёр чиглэлт</button>
+          </div>
+          <div id="mode-hint" class="hint"></div>
+        </div>
+
+        <div class="option-group">
+          <div class="option-label">Цаг</div>
+          <div class="seg" data-setting="time">
+            <button data-value="day">☀ Өдөр</button>
+            <button data-value="night">☾ Шөнө</button>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <div class="option-label">Машины өнгө</div>
+          <div id="colors" class="colors"></div>
+        </div>
+
+        <button id="btn-start" class="primary">ЭХЛЭХ</button>
+        <div id="menu-best" class="menu-best"></div>
+
+        <div class="touch-hint">◀ ▶ товчоор жолоодож, <b>ХУРД</b> / <b>ТОРМОЗ</b> / <b>N₂O</b> товчийг дарж тогло.</div>
+        <div class="controls">
+          <div><kbd>←</kbd><kbd>→</kbd> <kbd>A</kbd><kbd>D</kbd> <span>жолоодох</span></div>
+          <div><kbd>↑</kbd> <kbd>W</kbd> <span>хурдлах</span></div>
+          <div><kbd>↓</kbd> <kbd>S</kbd> <span>тормоз</span></div>
+          <div><kbd>Space</kbd> <span>нитро</span></div>
+          <div><kbd>C</kbd> <span>камер</span> <kbd>H</kbd> <span>дохио</span></div>
+          <div><kbd>P</kbd> <span>зогсоох</span> <kbd>M</kbd> <span>дуу</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause -->
+    <div id="pause" class="overlay center hidden">
+      <div class="panel small">
+        <h2>ТҮР ЗОГСЛОО</h2>
+        <button id="btn-resume" class="primary">ҮРГЭЛЖЛҮҮЛЭХ</button>
+        <button id="btn-pause-menu" class="secondary">ЦЭС</button>
+      </div>
+    </div>
+
+    <!-- Game over -->
+    <div id="gameover" class="overlay center hidden">
+      <div class="panel">
+        <h2 class="crash-title">МӨРГӨЛДЛӨӨ!</h2>
+        <div id="new-record" class="new-record hidden">★ ШИНЭ РЕКОРД ★</div>
+        <div class="final-label">НИЙТ ОНОО</div>
+        <div id="go-score" class="final-score">0</div>
+        <div class="stats">
+          <div><span>Туулсан зай</span><b id="go-dist">0</b></div>
+          <div><span>Дээд хурд</span><b id="go-top">0</b></div>
+          <div><span>Ойрхон өнгөрсөн</span><b id="go-near">0</b></div>
+          <div><span>Гүйцэж түрүүлсэн</span><b id="go-over">0</b></div>
+          <div><span>Шилдэг оноо</span><b id="go-best">0</b></div>
+        </div>
+        <button id="btn-retry" class="primary">ДАХИН ТОГЛОХ</button>
+        <button id="btn-menu" class="secondary">ЦЭС</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
